@@ -1,11 +1,12 @@
 import SwiftUI
 
-struct LogTodayView: View {
+struct LogMoodView: View {
     @State private var inputText = ""
     @State private var sentiment = ""
-    @State private var isShowingCalendar = false
-    @State private var loggedEmoji = ""
+    @State private var isShowingMoodLog = false
+    @State private var selectedEmoji: String? = nil
     @State private var loggedDate = Date()
+    @State private var moodLogs: [(mood: String?, date: Date)] = [] // Updated array to store mood logs
     
     let emojiMap: [String: String] = [
         "0": "😢", // sadness
@@ -17,7 +18,7 @@ struct LogTodayView: View {
     
     var body: some View {
         VStack {
-            Text("Log Your Mood")
+            Text("How're you feeling today?")
                 .font(.title)
                 .padding()
             
@@ -34,18 +35,22 @@ struct LogTodayView: View {
                     .padding()
             }
             
-            Spacer()
-            
             Button(action: {
-                loggedDate = Date()
-                isShowingCalendar = true
+                isShowingMoodLog = true
+                if let selectedEmoji = selectedEmoji {
+                    let mood = emojiMap.first { $0.value == selectedEmoji }?.key // Finding the mood corresponding to the selected emoji
+                    moodLogs.append((mood: mood, date: loggedDate))
+                    // Reset input fields
+                    inputText = ""
+                    sentiment = ""
+                }
             }) {
                 Text("Log Mood")
             }
             .padding()
         }
-        .sheet(isPresented: $isShowingCalendar) {
-            CalendarGridView(selectedDate: .constant(nil), emojiMap: emojiMap, loggedEmoji: loggedEmoji, loggedDate: loggedDate)
+        .sheet(isPresented: $isShowingMoodLog) {
+            MoodLogListView(moodLogs: moodLogs)
         }
     }
     
@@ -55,11 +60,11 @@ struct LogTodayView: View {
             let classifier = try EmosyncClassifier(configuration: .init())
             let output = try classifier.prediction(input: input)
             self.sentiment = emojiMap[output.label] ?? "Unknown"
-            self.loggedEmoji = self.sentiment
+            // Set selectedEmoji based on sentiment
+            self.selectedEmoji = self.sentiment.isEmpty ? nil : emojiMap[output.label]
         } catch {
             print("Error loading or predicting sentiment:", error)
             self.sentiment = "Error"
         }
     }
 }
-

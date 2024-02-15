@@ -1,28 +1,22 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var isLoggingMood = false
-    
     var body: some View {
         NavigationView {
             VStack {
                 Text("Emosync")
                     .font(.largeTitle)
+                    .foregroundStyle(Color.accentColor)
                     .padding()
                 
-                NavigationLink(destination: LogTodayView(), isActive: $isLoggingMood) {
-                    EmptyView()
-                }
-                
-                Button(action: {
-                    isLoggingMood = true
-                }) {
-                    Text("Log Today")
-                }
-                .padding()
-                
-                Spacer()
+                Text("EmoSync is a simple tool that keeps track of emotions. It shows that even when things get tough, there's a way to feel good about yourself.")
+                    .padding(.horizontal, 25)
+                    .multilineTextAlignment(.center)
             }
+            .navigationBarItems(trailing: NavigationLink(destination: CalendarView()) {
+                Image(systemName: "plus")
+                    .font(.title2)
+            })
         }
     }
 }
