@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct MoodLogListView: View {
-    var moodLogs: [(mood: String?, date: Date)]
+    @EnvironmentObject var moodLogData: MoodLogData // Access moodLogData directly as environment object
     
     var body: some View {
         NavigationView {
             List {
-                ForEach(moodLogs, id: \.date) { log in
+                ForEach(moodLogData.moodLogs, id: \.date) { log in // Access moodLogs from moodLogData
                     if let mood = log.mood {
                         Text("\(mood) - \(formattedDate(log.date))")
                     } else {

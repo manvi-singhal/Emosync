@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct LogMoodView: View {
+    var selectedDate: Date
+    @EnvironmentObject var moodLogData: MoodLogData
     @State private var inputText = ""
     @State private var sentiment = ""
+    @State private var isAnalyseMoodClicked = false
     @State private var isShowingMoodLog = false
     @State private var selectedEmoji: String? = nil
-    @State private var loggedDate = Date()
-    @State private var moodLogs: [(mood: String?, date: Date)] = [] // Updated array to store mood logs
     
     let emojiMap: [String: String] = [
         "0": "😢", // sadness
@@ -25,32 +26,42 @@ struct LogMoodView: View {
             TextField("Enter text", text: $inputText)
                 .padding()
             
-            Button(action: analyzeSentiment) {
-                Text("Analyze Sentiment")
-            }
-            .padding()
-            
-            if !sentiment.isEmpty {
-                Text("Sentiment: \(sentiment)")
-                    .padding()
-            }
-            
             Button(action: {
-                isShowingMoodLog = true
-                if let selectedEmoji = selectedEmoji {
-                    let mood = emojiMap.first { $0.value == selectedEmoji }?.key // Finding the mood corresponding to the selected emoji
-                    moodLogs.append((mood: mood, date: loggedDate))
-                    // Reset input fields
-                    inputText = ""
-                    sentiment = ""
+                if !inputText.isEmpty {
+                    analyzeSentiment()
+                    isAnalyseMoodClicked = true
                 }
             }) {
-                Text("Log Mood")
+                Text("Analyse Mood")
             }
             .padding()
+            
+            if isAnalyseMoodClicked {
+                if !sentiment.isEmpty {
+                    Text("You feel: \(sentiment)")
+                        .padding()
+                    
+                    Button(action: {
+                        isShowingMoodLog = true
+                        if let selectedEmoji = selectedEmoji {
+                            let mood = emojiMap.first { $0.value == selectedEmoji }?.key
+                            moodLogData.moodLogs.append((mood: mood, date: selectedDate)) // Append to moodLogData directly
+                            inputText = ""
+                            sentiment = ""
+                            isAnalyseMoodClicked = false // Reset the flag
+                        }
+                    }) {
+                        Text("Log Mood")
+                    }
+                    .padding()
+                } else {
+                    Text("Sentiment analysis in progress...")
+                        .padding()
+                }
+            }
         }
         .sheet(isPresented: $isShowingMoodLog) {
-            MoodLogListView(moodLogs: moodLogs)
+            MoodLogListView()
         }
     }
     
@@ -60,7 +71,6 @@ struct LogMoodView: View {
             let classifier = try EmosyncClassifier(configuration: .init())
             let output = try classifier.prediction(input: input)
             self.sentiment = emojiMap[output.label] ?? "Unknown"
-            // Set selectedEmoji based on sentiment
             self.selectedEmoji = self.sentiment.isEmpty ? nil : emojiMap[output.label]
         } catch {
             print("Error loading or predicting sentiment:", error)
