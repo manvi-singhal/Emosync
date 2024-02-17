@@ -1,16 +1,18 @@
 import SwiftUI
 
 struct MoodLogListView: View {
-    @EnvironmentObject var moodLogData: MoodLogData // Access moodLogData directly as environment object
+    @EnvironmentObject var moodLogData: MoodLogData
     
     var body: some View {
         NavigationView {
             List {
-                ForEach(moodLogData.moodLogs, id: \.date) { log in // Access moodLogs from moodLogData
-                    if let mood = log.mood {
-                        Text("\(mood) - \(formattedDate(log.date))")
+                ForEach(moodLogData.moodLogs, id: \.date) { log in
+                    if let mood = log.mood, let emojiInfo = moodLogData.emojiMap[mood] {
+                        HStack {
+                            Text("\(formattedDate(log.date)) - \(emojiInfo.name)\(emojiInfo.symbol)")
+                        }
                     } else {
-                        Text("Mood not selected - \(formattedDate(log.date))")
+                        Text("\(formattedDate(log.date)) - NA ")
                     }
                 }
             }

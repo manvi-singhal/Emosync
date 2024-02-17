@@ -9,22 +9,21 @@ struct LogMoodView: View {
     @State private var isShowingMoodLog = false
     @State private var selectedEmoji: String? = nil
     
-    let emojiMap: [String: String] = [
-        "0": "😢", // sadness
-        "1": "😄", // joy
-        "2": "❤️", // love
-        "3": "😠", // anger
-        "4": "😨"  // fear
-    ]
-    
     var body: some View {
         VStack {
+            
             Text("How're you feeling today?")
                 .font(.title)
                 .padding()
             
-            TextField("Enter text", text: $inputText)
+            TextField("Write about your day", text: $inputText)
                 .padding()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray, lineWidth: 1)
+                )
+                .padding(.horizontal,20)
+            
             
             Button(action: {
                 if !inputText.isEmpty {
@@ -33,36 +32,45 @@ struct LogMoodView: View {
                 }
             }) {
                 Text("Analyse Mood")
+                    .padding()
+                    .background(Color.accentColor)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
             }
             .padding()
             
             if isAnalyseMoodClicked {
                 if !sentiment.isEmpty {
-                    Text("You feel: \(sentiment)")
-                        .padding()
-                    
-                    Button(action: {
-                        isShowingMoodLog = true
-                        if let selectedEmoji = selectedEmoji {
-                            let mood = emojiMap.first { $0.value == selectedEmoji }?.key
-                            moodLogData.moodLogs.append((mood: mood, date: selectedDate)) // Append to moodLogData directly
-                            inputText = ""
-                            sentiment = ""
-                            isAnalyseMoodClicked = false // Reset the flag
-                        }
-                    }) {
-                        Text("Log Mood")
-                    }
-                    .padding()
-                } else {
-                    Text("Sentiment analysis in progress...")
+                    Text("You feel: \(sentiment)\(selectedEmoji ?? "")")
                         .padding()
                 }
+               
+                Button(action: {
+                    isShowingMoodLog = true
+                    if let selectedEmoji = selectedEmoji {
+                        if let mood = moodLogData.emojiMap.first(where: { $0.value.symbol == selectedEmoji })?.key {
+                            moodLogData.moodLogs.append((mood: mood, date: selectedDate))
+                            inputText = ""
+                            sentiment = ""
+                            isAnalyseMoodClicked = false
+                        } else {
+                            print("Error: Emoji not found in emojiMap for symbol \(selectedEmoji)")
+                        }
+                    }
+                }) {
+                    Text("Log Mood")
+                        .padding()
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .padding()
             }
         }
         .sheet(isPresented: $isShowingMoodLog) {
             MoodLogListView()
         }
+        .navigationBarBackButtonHidden(true)
     }
     
     func analyzeSentiment() {
@@ -70,11 +78,18 @@ struct LogMoodView: View {
         do {
             let classifier = try EmosyncClassifier(configuration: .init())
             let output = try classifier.prediction(input: input)
-            self.sentiment = emojiMap[output.label] ?? "Unknown"
-            self.selectedEmoji = self.sentiment.isEmpty ? nil : emojiMap[output.label]
+            
+            if let emojiInfo = moodLogData.emojiMap[output.label] {
+                self.selectedEmoji = emojiInfo.symbol
+                self.sentiment = emojiInfo.name
+            } else {
+                self.selectedEmoji = ""
+                print("Emoji info not found for index: \(output.label)")
+            }
         } catch {
             print("Error loading or predicting sentiment:", error)
             self.sentiment = "Error"
         }
     }
+    
 }

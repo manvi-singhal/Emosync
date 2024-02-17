@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject var moodLogData = MoodLogData()
     
     var body: some View {
         NavigationView {
@@ -19,6 +18,10 @@ struct ContentView: View {
                 NavigationLink(destination: MoodLogListView()){
                     Text("View Mood Log")
                         .font(.title3)
+                        .padding()
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
             }
             .navigationBarItems(trailing: NavigationLink(destination: CalendarView()) {
@@ -26,7 +29,7 @@ struct ContentView: View {
                     .font(.title2)
             })
         }
-        .environmentObject(moodLogData)
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 
